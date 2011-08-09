@@ -39,6 +39,7 @@ public class JPA implements Plugin
 	/**
 	 * When the application is initialized, create the entity manager factory
 	 *
+	 * @param name
 	 * @param app
 	 */
 	public void init(final String name, final AbstractApplication app)
@@ -116,7 +117,7 @@ public class JPA implements Plugin
 				}
 			}
 		} catch (Exception ex) {
-			ex.printStackTrace(System.out);
+			// @todo log?
 		} finally {
 			em.close();
 			entityManager.remove();
@@ -128,7 +129,8 @@ public class JPA implements Plugin
 	 *
 	 * @param o Entity to persist
 	 */
-	public static void persist(final Object o) {
+	public static void persist(final Object o)
+	{
 		entityManager.get().persist(o);
 	}
 
@@ -137,7 +139,8 @@ public class JPA implements Plugin
 	 *
 	 * @return Current Transaction
 	 */
-	public static EntityTransaction getTransaction() {
+	public static EntityTransaction getTransaction()
+	{
 		return entityManager.get().getTransaction();
 	}
 
@@ -146,7 +149,28 @@ public class JPA implements Plugin
 	 *
 	 * @return
 	 */
-	public static EntityManager getEntityManager() {
+	public static EntityManager getEntityManager()
+	{
 		return entityManager.get();
+	}
+
+	/**
+	 * If there is an uncaught exception, roll back any active transactions
+	 *
+	 * @param request
+	 * @param response
+	 */
+	public void onUncaughtException(HttpServletRequest request, HttpServletResponse response)
+	{
+		EntityManager em = entityManager.get();
+
+		try {
+			EntityTransaction t = em.getTransaction();
+			if (t.isActive()) {
+				t.rollback();
+			}
+		} catch (Exception ex) {
+			// @todo log?
+		}
 	}
 }
